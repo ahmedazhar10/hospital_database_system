@@ -1,0 +1,123 @@
+-- Schema: covid_schema
+-- DROP SCHEMA covid_schema;
+CREATE SCHEMA covid_schema;
+
+------Entities----------
+
+CREATE TABLE person (
+	email VARCHAR(60) NOT NULL,
+	name VARCHAR(30) NOT NULL,
+	phone BIGINT NOT NULL,
+	age INTEGER,
+	street VARCHAR(100),
+	borough VARCHAR(60),
+	PRIMARY KEY(email)
+);
+
+CREATE TYPE p_status AS ENUM ('infected', 'recovered', 'deceased');
+CREATE TABLE patient (
+	patient_id INTEGER NOT NULL,
+	patient_status p_status DEFAULT 'infected',
+	email VARCHAR(60) NOT NULL,
+	PRIMARY KEY(patient_id),
+	FOREIGN KEY(email) REFERENCES person(email)
+);
+
+CREATE TABLE borough (
+	b_name VARCHAR(60) NOT NULL,
+	population INTEGER NOT NULL,
+	PRIMARY KEY(b_name)
+);
+
+CREATE TYPE design AS ENUM ('doctor', 'nurse');
+CREATE TABLE health_professional (
+	hospital_id INTEGER NOT NULL,
+	name VARCHAR(30) NOT NULL,
+	phone BIGINT NOT NULL,
+	designation design,
+	PRIMARY KEY(hospital_id)
+);
+
+CREATE TABLE observation (
+	obv_id INTEGER NOT NULL,
+	date DATE NOT NULL,
+	text TEXT NOT NULL,
+	time TIME NOT NULL,
+	PRIMARY KEY(obv_id)
+);
+
+CREATE TYPE t_result AS ENUM ('pending', 'positive', 'negative');
+CREATE TABLE test (
+	tid INTEGER NOT NULL,
+	date DATE NOT NULL,
+	result t_result DEFAULT 'pending',
+	PRIMARY KEY(tid)
+);
+
+CREATE TABLE drug (
+	d_name VARCHAR(60) NOT NULL,
+	dosage INTEGER NOT NULL,
+	atc_code CHAR(7) NOT NULL,
+	PRIMARY KEY(d_name)
+);
+
+-----Relationships--------
+
+CREATE TABLE contacts (
+	patient_id INTEGER NOT NULL,
+	email VARCHAR(60) NOT NULL,
+	PRIMARY KEY(patient_id, email),
+	FOREIGN KEY(patient_id) REFERENCES patient(patient_id),
+	FOREIGN KEY(email) REFERENCES person(email)
+);
+
+CREATE TABLE lives (
+	email VARCHAR(60) NOT NULL,
+	b_name VARCHAR(60) NOT NULL,
+	PRIMARY KEY(email, b_name),
+	FOREIGN KEY(email) REFERENCES person(email),
+	FOREIGN KEY(b_name) REFERENCES borough(b_name)
+);
+
+CREATE TABLE receive_observation (
+	obv_id INTEGER NOT NULL,
+	patient_id INTEGER NOT NULL,
+	PRIMARY KEY(obv_id, patient_id),
+	FOREIGN KEY(obv_id) REFERENCES observation(obv_id),
+	FOREIGN KEY(patient_id) REFERENCES observation(patient_id)	
+);
+
+CREATE TABLE make_observation (
+	obv_id INTEGER NOT NULL,
+	hospital_id INTEGER NOT NULL,
+	PRIMARY KEY(obv_id, hospital_id),
+	FOREIGN KEY(obv_id) REFERENCES observation(obv_id),
+	FOREIGN KEY(hospital_id) REFERENCES health_professional(hospital_id)
+);
+
+CREATE TABLE get_tested (
+	tid INTEGER NOT NULL,
+	email VARCHAR(60) NOT NULL,
+	PRIMARY KEY(tid, email),
+	FOREIGN KEY(email) REFERENCES person(email),
+	FOREIGN KEY(tid) REFERENCES test(tid)
+);
+
+CREATE TABLE admin_on (
+	d_name VARCHAR(60) NOT NULL,
+	patient_id INTEGER NOT NULL,
+	date DATE NOT NULL,
+	time TIME  NOT NULL,
+	PRIMARY KEY(d_name, patient_id),
+	FOREIGN KEY(patient_id) REFERENCES patient(patient_id),
+	FOREIGN KEY(d_name) REFERENCES drug(d_name)
+
+);
+
+CREATE TABLE admin_by (
+	d_name VARCHAR(60) NOT NULL,
+	hospital_id INTEGER NOT NULL,
+	PRIMARY KEY(d_name, hospital_id),
+	FOREIGN KEY(hospital_id) REFERENCES health_professional(hospital_id),
+	FOREIGN KEY(d_name) REFERENCES drug(d_name)
+);
